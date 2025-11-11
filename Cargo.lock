@@ -133,7 +133,7 @@ dependencies = [
 
 [[package]]
 name = "tokio-uni-stream"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "rustix",
  "socket2",
