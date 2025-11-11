@@ -9,10 +9,10 @@ use std::sync::Arc;
 use std::task::{ready, Context, Poll};
 use std::{fmt, io};
 
-use socket2::Socket;
+use socket2::{SockRef, Socket};
 use tokio::io::unix::AsyncFd;
 use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
-use uni_addr::UniAddr;
+use uni_addr::{UniAddr, UniAddrInner};
 
 wrapper_lite::wrapper!(
     #[wrapper_impl(AsRef)]
@@ -153,6 +153,36 @@ impl TryFrom<std::os::unix::net::UnixStream> for UniStream {
 }
 
 impl UniStream {
+    /// Opens a TCP connection to a remote host.
+    ///
+    /// `addr` is an address of the remote host. If `addr` is a host which
+    /// yields multiple addresses, `connect` will be attempted with each of
+    /// the addresses until a connection is successful. If none of the
+    /// addresses result in a successful connection, the error returned from
+    /// the last connection attempt (the last address) is returned.
+    pub async fn connect(addr: &UniAddr) -> io::Result<Self> {
+        match addr.as_inner() {
+            UniAddrInner::Inet(addr) => tokio::net::TcpStream::connect(addr)
+                .await
+                .and_then(Self::try_from),
+            UniAddrInner::Unix(addr) => tokio::net::UnixStream::connect(addr.to_os_string())
+                .await
+                .and_then(Self::try_from),
+            UniAddrInner::Host(addr) => tokio::net::TcpStream::connect(&**addr)
+                .await
+                .and_then(Self::try_from),
+            _ => Err(io::Error::new(
+                io::ErrorKind::Other,
+                "unsupported address type",
+            )),
+        }
+    }
+
+    /// Returns a [`SockRef`] to the underlying socket for configuration.
+    pub fn as_socket_ref(&self) -> SockRef<'_> {
+        self.inner.get_ref().into()
+    }
+
     #[inline]
     /// Returns the local address of this stream.
     pub const fn local_addr(&self) -> &UniAddr {

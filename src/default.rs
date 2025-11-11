@@ -1,8 +1,12 @@
 //! A simple TCP stream wrapper for non-Unix platforms.
 
+use std::io;
 use std::os::fd::{AsFd, AsRawFd, BorrowedFd, RawFd};
 #[cfg(windows)]
 use std::os::windows::io::BorrowedSocket;
+
+use socket2::SockRef;
+use uni_addr::{UniAddr, UniAddrInner};
 
 wrapper_lite::wrapper!(
     #[wrapper_impl(Debug)]
@@ -56,6 +60,27 @@ impl TryFrom<std::net::TcpStream> for UniStream {
 }
 
 impl UniStream {
+    /// See [`tokio::net::TcpStream::connect`].
+    pub async fn connect(addr: &UniAddr) -> io::Result<Self> {
+        match addr.as_inner() {
+            UniAddrInner::Inet(addr) => tokio::net::TcpStream::connect(addr)
+                .await
+                .map(Self::const_from),
+            UniAddrInner::Host(addr) => tokio::net::TcpStream::connect(&**addr)
+                .await
+                .map(Self::const_from),
+            _ => Err(io::Error::new(
+                io::ErrorKind::Other,
+                "unsupported address type",
+            )),
+        }
+    }
+
+    /// Returns a [`SockRef`] to the underlying socket for configuration.
+    pub fn as_socket_ref(&self) -> SockRef<'_> {
+        self.as_inner().into()
+    }
+
     /// See [`tokio::net::TcpStream::into_split`].
     pub fn into_split(self) -> (OwnedReadHalf, OwnedWriteHalf) {
         let (read_half, write_half) = self.inner.into_split();

@@ -32,8 +32,13 @@ tokio = { version = "1.48", features = ["macros", "net", "io-util", "rt"] }
 tokio-uni-stream = { path = ".", features = ["splice"] }
 
 [features]
+default = ["all"]
+
 # Enable `splice(2)` support on Unix platforms.
 splice = ["dep:rustix"]
+
+# `socket2`'s feature `all`
+all = ["socket2/all"]
 
 [lints]
 clippy.allow_attributes_without_reason = "warn"
