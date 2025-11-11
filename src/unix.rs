@@ -26,6 +26,7 @@ wrapper_lite::wrapper!(
     }
 );
 
+#[allow(clippy::missing_fields_in_debug)]
 impl fmt::Debug for Stream {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Stream")
@@ -169,7 +170,7 @@ impl AsyncRead for Stream {
                     return Poll::Ready(Ok(()));
                 }
                 Ok(Err(err)) => return Poll::Ready(Err(err)),
-                Err(_would_block) => continue,
+                Err(_would_block) => {}
             }
         }
     }
@@ -186,7 +187,7 @@ impl AsyncWrite for Stream {
 
             match guard.try_io(|inner| inner.get_ref().send(buf)) {
                 Ok(result) => return Poll::Ready(result),
-                Err(_would_block) => continue,
+                Err(_would_block) => {},
             }
         }
     }
@@ -205,12 +206,14 @@ impl AsyncWrite for Stream {
 impl Stream {
     #[inline]
     /// Returns the local address of this stream.
+    #[must_use]
     pub const fn local_addr(&self) -> &UniAddr {
         &self.local_addr
     }
 
     #[inline]
     /// Returns the peer address of this stream.
+    #[must_use]
     pub const fn peer_addr(&self) -> &UniAddr {
         &self.peer_addr
     }
@@ -221,6 +224,10 @@ impl Stream {
     ///
     /// Successive calls return the same data. This is accomplished by passing
     /// `MSG_PEEK` as a flag to the underlying `recv` system call.
+    ///
+    /// # Errors
+    ///
+    /// See [`AsyncFd::readable`] and [`Socket::peek`] for possible errors.
     pub async fn peek(&self, buf: &mut [u8]) -> io::Result<usize> {
         loop {
             let mut guard = self.inner.readable().await?;
@@ -230,7 +237,7 @@ impl Stream {
 
             match guard.try_io(|inner| inner.get_ref().peek(buf)) {
                 Ok(result) => return result,
-                Err(_would_block) => continue,
+                Err(_would_block) => {},
             }
         }
     }
@@ -241,6 +248,11 @@ impl Stream {
     ///
     /// Successive calls return the same data. This is accomplished by passing
     /// `MSG_PEEK` as a flag to the underlying `recv` system call.
+    ///
+    /// # Errors
+    ///
+    /// See [`AsyncFd::poll_read_ready`] and [`Socket::peek`] for possible
+    /// errors.
     pub fn poll_peek(
         self: Pin<&mut Self>,
         cx: &mut Context<'_>,
@@ -266,7 +278,7 @@ impl Stream {
                     return Poll::Ready(Ok(len));
                 }
                 Ok(Err(err)) => return Poll::Ready(Err(err)),
-                Err(_would_block) => continue,
+                Err(_would_block) => {},
             }
         }
     }
@@ -337,7 +349,7 @@ impl Stream {
 
 //         let addr = format!("{DEFAULT_ABSTRACT_NAME}_{}",
 // rand::random::<u64>());         let addr =
-//             
+//
 // std::os::unix::net::SocketAddr::from_abstract_name(&addr).expect("Must be
 // valid");
 

@@ -47,7 +47,7 @@ impl TryFrom<std::net::TcpStream> for Stream {
     ///
     /// The runtime is usually set implicitly when this function is called
     /// from a future driven by a tokio runtime, otherwise runtime can be
-    /// set explicitly with Runtime::enter function.
+    /// set explicitly with `Runtime::enter` function.
     fn try_from(stream: std::net::TcpStream) -> Result<Self, Self::Error> {
         stream.set_nonblocking(true)?;
 
