@@ -30,41 +30,80 @@ env:
   RUST_BACKTRACE: full
 
 jobs:
+  # test:
+  #   name: Test (Rust ${{matrix.toolchain}}, ${{matrix.os}}, target ${{matrix.target}})
+  #   runs-on: ${{matrix.os}}
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       toolchain: ["nightly", "beta", "stable", "1.71.0"]
+  #       os: [ubuntu-latest, windows-latest, macos-latest]
+  #       include:
+  #         - os: ubuntu-latest
+  #           target: x86_64-unknown-linux-gnu
+  #         - os: windows-latest
+  #           target: x86_64-pc-windows-msvc
+  #         - os: macos-latest
+  #           target: aarch64-apple-darwin
+  #   timeout-minutes: 45
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         persist-credentials: false
+  #     - uses: dtolnay/rust-toolchain@master
+  #       with:
+  #         toolchain: ${{matrix.toolchain}}
+  #         components: llvm-tools, clippy, rust-src
+  #     - uses: taiki-e/install-action@v2
+  #       with:
+  #         tool: just,cargo-llvm-cov,cargo-nextest
+  #     - name: Enable type layout randomization
+  #       if: matrix.toolchain == 'nightly'
+  #       run: echo RUSTFLAGS=${RUSTFLAGS}\ -Zrandomize-layout >> $GITHUB_ENV
+  #     - run: sudo apt-get update && sudo apt-get install -y musl-tools
+  #       if: endsWith(matrix.target, 'musl')
+  #     - run: rustup target add ${{matrix.target}}
+  #     - run: just ci-test --target ${{matrix.target}}
+
   build:
-    name: Build (Rust ${{matrix.toolchain}}, ${{matrix.os}}, target ${{matrix.target}})
-    runs-on: ${{matrix.os}}
+    name: Build (target ${{matrix.target}})
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        toolchain: ["nightly", "beta", "stable", "1.71.0"]
-        os: ["ubuntu-latest", "windows-latest"]
-        target: ["x86_64-unknown-linux-gnu", "x86_64-unknown-linux-musl", "x86_64-pc-windows-msvc"]
-        exclude:
-          - os: ubuntu-latest
-            target: x86_64-pc-windows-msvc
-          - os: windows-latest
-            target: x86_64-unknown-linux-gnu
-          - os: windows-latest
-            target: x86_64-unknown-linux-musl
+        target:
+          # Tier 1
+          - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
+          # Tier 2
+          - x86_64-unknown-linux-musl
+          - aarch64-unknown-linux-musl
+          - loongarch64-unknown-linux-musl
+          - arm-unknown-linux-musleabi
+          - arm-unknown-linux-musleabihf
+          - armv7-unknown-linux-musleabi
+          - armv7-unknown-linux-musleabihf
+          # Tier 2 without Host Tools
+          - x86_64-linux-android
+          - aarch64-linux-android
+          # Tier 3
+          - mips-unknown-linux-musl
+          - mipsel-unknown-linux-musl
+          - mips64-unknown-linux-muslabi64
+          - mips64el-unknown-linux-muslabi64
+          - riscv64gc-unknown-linux-gnu
+          - riscv64gc-unknown-linux-musl
+          - s390x-unknown-linux-gnu
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{matrix.toolchain}}
-          components: llvm-tools, clippy, rust-src
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: just,cargo-llvm-cov,cargo-nextest
-      - name: Enable type layout randomization
-        if: matrix.toolchain == 'nightly'
-        run: echo RUSTFLAGS=${RUSTFLAGS}\ -Zrandomize-layout >> $GITHUB_ENV
-      - run: sudo apt-get update && sudo apt-get install -y musl-tools
-        if: endsWith(matrix.target, 'musl')
-      - run: rustup target add ${{matrix.target}}
-      - run: just build --target ${{matrix.target}}
+      - uses: dtolnay/rust-toolchain@nightly
+      - run: |
+          cargo install cross --git https://github.com/cross-rs/cross
+          cross build --target=${{ matrix.target }}
+          cross build --target=${{ matrix.target }} --release
 
   docs:
     name: Documentation

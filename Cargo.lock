@@ -142,19 +142,7 @@ dependencies = [
  "mio",
  "pin-project-lite",
  "socket2",
- "tokio-macros",
  "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "tokio-macros"
-version = "2.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "af407857209536a95c8e56f8231ef2c2e2aff839b22e07a1ffcbc617e9db9fa5"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]
@@ -171,7 +159,7 @@ dependencies = [
 
 [[package]]
 name = "tokio-uni-stream"
-version = "0.0.7"
+version = "0.0.8"
 dependencies = [
  "socket2",
  "tokio",
@@ -183,9 +171,9 @@ dependencies = [
 
 [[package]]
 name = "uni-addr"
-version = "0.3.3"
+version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "511e5094c837830160c0643ef7e4818e02d7cd9f71dfbfc24bfaab703e700ab3"
+checksum = "dfa8f0fcaba4466e6df935354e013ec6f3142c74a2fe461e72f685e70439cb40"
 dependencies = [
  "tokio",
  "wrapper-lite",

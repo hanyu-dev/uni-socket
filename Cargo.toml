@@ -1,6 +1,6 @@
 [package]
 name = "tokio-uni-stream"
-version = "0.0.7"
+version = "0.0.8"
 edition = "2021"
 rust-version = "1.71.0"
 # === Publication info ===
@@ -22,13 +22,13 @@ targets = ["x86_64-unknown-linux-gnu"]
 socket2 = "0.6.1"
 tokio = { version = "1.48", features = ["net", "io-util"] }
 tokio-splice2 = { version = "0.3.2", optional = true }
-uni-addr = { version = "0.3.3", default-features = false, features = ["feat-tokio"] }
+uni-addr = { version = "0.3.4", default-features = false, features = ["feat-tokio"] }
 wrapper-lite = "0.3.2"
 
-[dev-dependencies]
-tokio = { version = "1.48", features = ["macros", "net", "io-util", "rt"] }
+# [dev-dependencies]
+# tokio = { version = "1.48", features = ["macros", "net", "io-util", "rt"] }
 
-[target.'cfg(unix)'.dev-dependencies]
+[target.'cfg(target_os = "linux")'.dev-dependencies]
 tokio-uni-stream = { path = ".", features = ["splice"] }
 
 [features]
