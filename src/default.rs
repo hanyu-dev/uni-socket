@@ -16,19 +16,6 @@ wrapper_lite::wrapper!(
     pub struct UniStream(tokio::net::TcpStream);
 );
 
-impl TryFrom<tokio::net::TcpStream> for UniStream {
-    type Error = io::Error;
-
-    /// Converts a Tokio TCP stream into a [`UniStream`].
-    ///
-    /// # Errors
-    ///
-    /// This is infallible and always returns `Ok`, for APIs consistency.
-    fn try_from(value: tokio::net::TcpStream) -> Result<Self, Self::Error> {
-        Ok(Self::const_from(value))
-    }
-}
-
 #[cfg(windows)]
 mod sys {
     use std::os::windows::io::{AsRawSocket, AsSocket, BorrowedSocket, RawSocket};
@@ -45,6 +32,19 @@ mod sys {
         fn as_raw_socket(&self) -> RawSocket {
             self.as_inner().as_raw_socket()
         }
+    }
+}
+
+impl TryFrom<tokio::net::TcpStream> for UniStream {
+    type Error = io::Error;
+
+    /// Converts a Tokio TCP stream into a [`UniStream`].
+    ///
+    /// # Errors
+    ///
+    /// This is infallible and always returns `Ok`, for APIs consistency.
+    fn try_from(value: tokio::net::TcpStream) -> Result<Self, Self::Error> {
+        Ok(Self::const_from(value))
     }
 }
 
@@ -97,33 +97,9 @@ impl UniStream {
     #[must_use]
     /// See [`tokio::net::TcpStream::into_split`].
     pub fn into_split(self) -> (OwnedReadHalf, OwnedWriteHalf) {
-        let (read_half, write_half) = self.inner.into_split();
-
-        (
-            OwnedReadHalf::const_from(read_half),
-            OwnedWriteHalf::const_from(write_half),
-        )
+        self.inner.into_split()
     }
 }
 
-wrapper_lite::wrapper!(
-    #[wrapper_impl(Debug)]
-    #[wrapper_impl(AsRef)]
-    #[wrapper_impl(AsMut)]
-    #[wrapper_impl(BorrowMut)]
-    #[wrapper_impl(DerefMut)]
-    #[wrapper_impl(From)]
-    /// See [`tokio::net::tcp::OwnedReadHalf`].
-    pub struct OwnedReadHalf(tokio::net::tcp::OwnedReadHalf);
-);
-
-wrapper_lite::wrapper!(
-    #[wrapper_impl(Debug)]
-    #[wrapper_impl(AsRef)]
-    #[wrapper_impl(AsMut)]
-    #[wrapper_impl(BorrowMut)]
-    #[wrapper_impl(DerefMut)]
-    #[wrapper_impl(From)]
-    /// See [`tokio::net::tcp::OwnedWriteHalf`].
-    pub struct OwnedWriteHalf(tokio::net::tcp::OwnedWriteHalf);
-);
+// Re-export split halves
+pub use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
