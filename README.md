@@ -7,6 +7,9 @@
 
 Combines both `TcpStream` and `UnixStream` into a single [`UniStream`] type, and provides a fallback type for non-Unix platforms.
 
+> [!WARNING]
+> This crate is renamed and deprecated, use [`uni-socket`](https://crates.io/crates/uni-socket) instead.
+
 ## License
 
 Licensed under either of

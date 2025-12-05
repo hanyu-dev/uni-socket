@@ -328,7 +328,7 @@ dependencies = [
 
 [[package]]
 name = "tokio-uni-stream"
-version = "0.0.9"
+version = "0.0.10"
 dependencies = [
  "libc",
  "network-interface",
