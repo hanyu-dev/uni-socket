@@ -1,5 +1,8 @@
 //! A unified stream type for both TCP and Unix domain sockets.
 
+#[cfg(all(target_os = "linux", feature = "splice"))]
+pub mod splice;
+
 use std::marker::PhantomData;
 use std::mem::MaybeUninit;
 use std::net::{Shutdown, SocketAddr};
@@ -823,7 +826,7 @@ impl AsyncWrite for UniStream {
     }
 }
 
-#[cfg(feature = "splice")]
+#[cfg(feature = "splice-legacy")]
 impl tokio_splice2::AsyncReadFd for UniStream {
     fn poll_read_ready(&self, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
         self.inner.poll_read_ready(cx).map_ok(|_| ())
@@ -836,7 +839,7 @@ impl tokio_splice2::AsyncReadFd for UniStream {
     }
 }
 
-#[cfg(feature = "splice")]
+#[cfg(feature = "splice-legacy")]
 impl tokio_splice2::AsyncWriteFd for UniStream {
     fn poll_write_ready(&self, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
         self.inner.poll_write_ready(cx).map_ok(|_| ())
@@ -849,7 +852,7 @@ impl tokio_splice2::AsyncWriteFd for UniStream {
     }
 }
 
-#[cfg(feature = "splice")]
+#[cfg(feature = "splice-legacy")]
 impl tokio_splice2::IsNotFile for UniStream {}
 
 wrapper_lite::wrapper!(

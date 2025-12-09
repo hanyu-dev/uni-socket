@@ -344,6 +344,7 @@ dependencies = [
  "libc",
  "network-interface",
  "rstest",
+ "rustix",
  "socket2",
  "tokio",
  "tokio-splice2",
